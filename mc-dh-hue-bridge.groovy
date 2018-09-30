@@ -1,14 +1,13 @@
-//DEPRECATED. INTEGRATION MOVED TO SUPER LAN CONNECT
-
 /**
  *  Hue Bridge
  *
- *  Author: SmartThings
+ *  Initial Author: SmartThings
+ *  Modified by John McManigle 2018
  */
 // for the UI
 metadata {
 	// Automatically generated. Make future change here.
-	definition (name: "Hue Bridge", namespace: "smartthings", author: "SmartThings") {
+	definition (name: "Hue Bridge", namespace: "mcmanigle", author: "John McManigle") {
 		capability "Bridge"
 		capability "Health Check"
 

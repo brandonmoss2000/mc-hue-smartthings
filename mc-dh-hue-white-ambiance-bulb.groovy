@@ -1,17 +1,16 @@
-//DEPRECATED. INTEGRATION MOVED TO SUPER LAN CONNECT
-
 /**
  *  Hue White Ambiance Bulb
  *
  *  Philips Hue Type "Color Temperature Light"
  *
- *  Author: SmartThings
+ *  Initial Author: SmartThings
+ *  Modified by John McManigle 2018
  */
 
 // for the UI
 metadata {
     // Automatically generated. Make future change here.
-    definition (name: "Hue White Ambiance Bulb", namespace: "smartthings", author: "SmartThings") {
+    definition (name: "Hue White Ambiance Bulb", namespace: "mcmanigle", author: "John McManigle") {
         capability "Switch Level"
         capability "Actuator"
         capability "Color Temperature"

@@ -1,16 +1,15 @@
 /**
  *  Hue Bulb
  *
- *  Philips Hue Type "Extended Color Light"
+ *  Philips Hue Type "Extended Color Group"
  *
- *  Initial Author: SmartThings
- *  Modified by John McManigle 2018
+ *  Adapted by John McManigle 2018
  */
 
 // for the UI
 metadata {
 	// Automatically generated. Make future change here.
-	definition (name: "Hue Bulb", namespace: "mcmanigle", author: "John McManigle") {
+	definition (name: "Hue Group", namespace: "mcmanigle", author: "John McManigle") {
 		capability "Switch Level"
 		capability "Actuator"
 		capability "Color Control"
@@ -33,10 +32,10 @@ metadata {
 	tiles (scale: 2){
 		multiAttributeTile(name:"rich-control", type: "lighting", width: 6, height: 4, canChangeIcon: true){
 			tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
-				attributeState "on", label:'${name}', action:"switch.off", icon:"st.lights.philips.hue-single", backgroundColor:"#00A0DC", nextState:"turningOff"
-				attributeState "off", label:'${name}', action:"switch.on", icon:"st.lights.philips.hue-single", backgroundColor:"#ffffff", nextState:"turningOn"
-				attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.lights.philips.hue-single", backgroundColor:"#00A0DC", nextState:"turningOff"
-				attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.lights.philips.hue-single", backgroundColor:"#ffffff", nextState:"turningOn"
+				attributeState "on", label:'${name}', action:"switch.off", icon:"st.lights.philips.hue-multi", backgroundColor:"#00A0DC", nextState:"turningOff"
+				attributeState "off", label:'${name}', action:"switch.on", icon:"st.lights.philips.hue-multi", backgroundColor:"#ffffff", nextState:"turningOn"
+				attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.lights.philips.hue-multi", backgroundColor:"#00A0DC", nextState:"turningOff"
+				attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.lights.philips.hue-multi", backgroundColor:"#ffffff", nextState:"turningOn"
 			}
 			tileAttribute ("device.level", key: "SLIDER_CONTROL") {
 				attributeState "level", action:"switch level.setLevel", range:"(0..100)"
@@ -88,7 +87,7 @@ def parse(description) {
 
 	def map = description
 	if (description instanceof String)  {
-		log.debug "Hue Bulb stringToMap - ${map}"
+		log.debug "Hue Group stringToMap - ${map}"
 		map = stringToMap(description)
 	}
 
@@ -100,31 +99,31 @@ def parse(description) {
 
 // handle commands
 void on() {
-	log.trace parent.on(this)
+	log.trace parent.groupOn(this)
 }
 
 void off() {
-	log.trace parent.off(this)
+	log.trace parent.groupOff(this)
 }
 
 void setLevel(percent) {
     log.debug "Executing 'setLevel'"
     if (verifyPercent(percent)) {
-	    log.trace parent.setLevel(this, percent)
+	    log.trace parent.setGroupLevel(this, percent)
     }
 }
 
 void setSaturation(percent) {
     log.debug "Executing 'setSaturation'"
     if (verifyPercent(percent)) {
-	    log.trace parent.setSaturation(this, percent)
+	    log.trace parent.setGroupSaturation(this, percent)
     }
 }
 
 void setHue(percent) {
     log.debug "Executing 'setHue'"
     if (verifyPercent(percent)) {
-	    log.trace parent.setHue(this, percent)
+	    log.trace parent.setGroupHue(this, percent)
     }
 }
 
@@ -154,7 +153,7 @@ void setColor(value) {
         validValues.switch = "on"
     }
     if (!validValues.isEmpty()) {
-	    log.trace parent.setColor(this, validValues)
+	    log.trace parent.setGroupColor(this, validValues)
     }
 }
 
@@ -178,7 +177,7 @@ void setAdjustedColor(value) {
 void setColorTemperature(value) {
     if (value) {
         log.trace "setColorTemperature: ${value}k"
-	    log.trace parent.setColorTemperature(this, value)
+	    log.trace parent.setGroupColorTemperature(this, value)
     } else {
         log.warn "Invalid color temperature $value"
     }
