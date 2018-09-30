@@ -15,6 +15,7 @@ metadata {
 		capability "Actuator"
 		capability "Color Control"
 		capability "Color Temperature"
+		capability "Color Mode"
 		capability "Switch"
 		capability "Refresh"
 		capability "Sensor"

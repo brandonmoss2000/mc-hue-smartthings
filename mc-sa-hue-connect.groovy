@@ -22,7 +22,7 @@ definition(
 		name: "Hue (Connect)",
 		namespace: "mcmanigle",
 		author: "John McManigle",
-		description: "Allows you to connect your Philips Hue lights with SmartThings and control them from your Things area or Dashboard in the SmartThings Mobile app. Please update your Hue Bridge first, outside of the SmartThings app, using the Philips Hue app.",
+		description: "Allows you to connect your Philips Hue lights, groups, and scenes with SmartThings and control them from your Things area or Dashboard in the SmartThings Mobile app. Please update your Hue Bridge first, outside of the SmartThings app, using the Philips Hue app.",
 		category: "SmartThings Labs",
 		iconUrl: "https://s3.amazonaws.com/smartapp-icons/Partner/hue.png",
 		iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Partner/hue@2x.png",
@@ -36,6 +36,7 @@ preferences {
 	page(name: "bridgeBtnPush", title: "", content: "bridgeLinking", refreshTimeout: 5)
 	page(name: "bulbDiscovery", title: "", content: "bulbDiscovery", refreshTimeout: 5)
 	page(name: "groupDiscovery", title: "", content: "groupDiscovery", refreshTimeout: 5)
+	page(name: "sceneDiscovery", title: "", content: "sceneDiscovery", refreshTimeout: 5)
 }
 
 def mainPage() {
@@ -88,7 +89,6 @@ def bridgeDiscovery(params = [:]) {
 
 	return dynamicPage(name: "bridgeDiscovery", title: "Discovery Started!", nextPage: "bridgeBtnPush", refreshInterval: refreshInterval, uninstall: true) {
 		section("Please wait while we discover your Hue Bridge. Kindly note that you must first configure your Hue Bridge and Lights using the Philips Hue application. Discovery can take five minutes or more, so sit back and relax! Select your device below once discovered.") {
-
 
 			input(name: "selectedHue", type: "enum", required: false, title: "Select Hue Bridge ({{numFound}} found)", messageArgs: [numFound: numFound], multiple: false, options: options, submitOnChange: true)
 		}
@@ -186,7 +186,7 @@ def bulbDiscovery() {
 		// Time out after 10 minutes
 		state.inBulbDiscovery = false
 		bulbRefreshCount = 0
-		return dynamicPage(name: "bulbDiscovery", title: "Light Discovery Failed!", nextPage: "groupDiscovery", refreshInterval: 0, install: true, uninstall: true) {
+		return dynamicPage(name: "bulbDiscovery", title: "Light Discovery Failed!", nextPage: "groupDiscovery", refreshInterval: 0, install: false, uninstall: true) {
 			section("Failed to discover any lights, please try again later. Click 'Done' to exit.") {
 				paragraph title: "Previously added Hue Lights ({{existingLightsSize}} added)", messageArgs: [existingLightsSize: existingLightsSize], existingLightsDescription
 			}
@@ -196,7 +196,7 @@ def bulbDiscovery() {
 		}
 
 	} else {
-		return dynamicPage(name: "bulbDiscovery", title: "Light Discovery Started!", nextPage: "groupDiscovery", refreshInterval: refreshInterval, install: true, uninstall: true) {
+		return dynamicPage(name: "bulbDiscovery", title: "Light Discovery Started!", nextPage: "groupDiscovery", refreshInterval: refreshInterval, install: false, uninstall: true) {
 			section("Please wait while we discover your Hue Lights. Discovery can take five minutes or more, so sit back and relax! Select your device below once discovered.") {
 				input(name: "selectedBulbs", type: "enum", required: false, title: "Select Hue Lights to add ({{numFound}} found)", messageArgs: [numFound: numFound], multiple: true, submitOnChange: true, options: newLights)
 				paragraph title: "Previously added Hue Lights ({{existingLightsSize}} added)", messageArgs: [existingLightsSize: existingLightsSize], existingLightsDescription
@@ -236,7 +236,7 @@ def groupDiscovery() {
 	def selectedBridge = state.bridges.find { key, value -> value?.serialNumber?.equalsIgnoreCase(selectedHue) }
 	def title = selectedBridge?.value?.name ?: "Find bridges"
 
-	// List of all lights previously added shown to user
+	// List of all groups previously added shown to user
 	def existingGroupsDescription = ""
 	if (existingGroups) {
 		existingGroups.each {
@@ -248,14 +248,14 @@ def groupDiscovery() {
 		}
 	}
 
-	def existingGroupsSize = "${existingLights.size()}"
+	def existingGroupsSize = "${existingGroups.size()}"
 	if (groupRefreshCount > 200 && numFound == "0") {
 		// Time out after 10 minutes
 		state.inGroupDiscovery = false
 		groupRefreshCount = 0
-		return dynamicPage(name: "groupDiscovery", title: "Group Discovery Failed!", nextPage: "", refreshInterval: 0, install: true, uninstall: true) {
+		return dynamicPage(name: "groupDiscovery", title: "Group Discovery Failed!", nextPage: "sceneDiscovery", refreshInterval: 0, install: false, uninstall: true) {
 			section("Failed to discover any groups, please try again later. Click 'Done' to exit.") {
-				paragraph title: "Previously added Hue Groups ({{existingLightsSize}} added)", messageArgs: [existingGroupsSize: existingGroupsSize], existingGroupsDescription
+				paragraph title: "Previously added Hue Groups ({{existingGroupsSize}} added)", messageArgs: [existingGroupsSize: existingGroupsSize], existingGroupsDescription
 			}
 			section {
 				href "bridgeDiscovery", title: title, description: "", state: selectedHue ? "complete" : "incomplete", params: [override: true]
@@ -263,9 +263,9 @@ def groupDiscovery() {
 		}
 
 	} else {
-		return dynamicPage(name: "groupDiscovery", title: "Group Discovery Started!", nextPage: "", refreshInterval: refreshInterval, install: true, uninstall: true) {
+		return dynamicPage(name: "groupDiscovery", title: "Group Discovery Started!", nextPage: "sceneDiscovery", refreshInterval: refreshInterval, install: false, uninstall: true) {
 			section("Please wait while we discover your Hue Groups. Discovery can take five minutes or more, so sit back and relax! Select your device below once discovered.") {
-				input(name: "selectedBulbs", type: "enum", required: false, title: "Select Hue Lights to add ({{numFound}} found)", messageArgs: [numFound: numFound], multiple: true, submitOnChange: true, options: newLights)
+				input(name: "selectedGroups", type: "enum", required: false, title: "Select Hue Groups to add ({{numFound}} found)", messageArgs: [numFound: numFound], multiple: true, submitOnChange: true, options: newGroups)
 				paragraph title: "Previously added Hue Groups ({{existingGroupsSize}} added)", messageArgs: [existingGroupsSize: existingGroupsSize], existingGroupsDescription
 			}
 			section {
@@ -274,6 +274,74 @@ def groupDiscovery() {
 		}
 	}
 }
+
+def sceneDiscovery() {
+	int sceneRefreshCount = !state.sceneRefreshCount ? 0 : state.sceneRefreshCount as int
+	state.sceneRefreshCount = sceneRefreshCount + 1
+	def refreshInterval = 3
+	state.inSceneDiscovery = true
+	def bridge = null
+
+	state.bridgeRefreshCount = 0
+	def allScenesFound = scenesDiscovered() ?: [:]
+
+	// List scenes currently not added to the user (editable)
+	def newScenes = allScenesFound.findAll { getChildDevice(it.key) == null } ?: [:]
+	newScenes = newScenes.sort { it.value.toLowerCase() }
+
+	// List scenes already added to the user (not editable)
+	def existingScenes = allScenesFound.findAll { getChildDevice(it.key) != null } ?: [:]
+	existingScenes = existingScenes.sort { it.value.toLowerCase() }
+
+	def numFound = newScenes.size() ?: "0"
+	if (numFound == "0")
+		app.updateSetting("selectedScenes", "")
+
+	if ((sceneRefreshCount % 5) == 0) {
+		discoverHueScenes()
+	}
+	def selectedBridge = state.bridges.find { key, value -> value?.serialNumber?.equalsIgnoreCase(selectedHue) }
+	def title = selectedBridge?.value?.name ?: "Find bridges"
+
+	// List of all scenes previously added shown to user
+	def existingScenesDescription = ""
+	if (existingScenes) {
+		existingScenes.each {
+			if (existingScenesDescription.isEmpty()) {
+				existingScenesDescription += it.value
+			} else {
+				existingScenesDescription += ", ${it.value}"
+			}
+		}
+	}
+
+	def existingScenesSize = "${existingScenes.size()}"
+	if (sceneRefreshCount > 200 && numFound == "0") {
+		// Time out after 10 minutes
+		state.inSceneDiscovery = false
+		sceneRefreshCount = 0
+		return dynamicPage(name: "sceneDiscovery", title: "Scene Discovery Failed!", nextPage: "", refreshInterval: 0, install: true, uninstall: true) {
+			section("Failed to discover any scenes, please try again later. Click 'Done' to exit.") {
+				paragraph title: "Previously added Hue Scenes ({{existingScenesSize}} added)", messageArgs: [existingScenesSize: existingScenesSize], existingScenesDescription
+			}
+			section {
+				href "bridgeDiscovery", title: title, description: "", state: selectedHue ? "complete" : "incomplete", params: [override: true]
+			}
+		}
+
+	} else {
+		return dynamicPage(name: "sceneDiscovery", title: "Scene Discovery Started!", nextPage: "", refreshInterval: refreshInterval, install: true, uninstall: true) {
+			section("Please wait while we discover your Hue Scenes. Discovery can take five minutes or more, so sit back and relax! Select your device below once discovered.") {
+				input(name: "selectedScenes", type: "enum", required: false, title: "Select Hue Scenes to add ({{numFound}} found)", messageArgs: [numFound: numFound], multiple: true, submitOnChange: true, options: newScenes)
+				paragraph title: "Previously added Hue Scenes ({{existingScenesSize}} added)", messageArgs: [existingScenesSize: existingScenesSize], existingScenesDescription
+			}
+			section {
+				href "bridgeDiscovery", title: title, description: "", state: selectedHue ? "complete" : "incomplete", params: [override: true]
+			}
+		}
+	}
+}
+
 
 private discoverBridges() {
 	sendHubCommand(new physicalgraph.device.HubAction("lan discovery urn:schemas-upnp-org:device:basic:1", physicalgraph.device.Protocol.LAN))
@@ -313,6 +381,16 @@ private discoverHueGroups() {
 			headers: [
 					HOST: host
 			]], "${selectedHue}", [callback: "groupsHandler"]))
+}
+
+private discoverHueScenes() {
+	def host = getBridgeIP()
+	sendHubCommand(new physicalgraph.device.HubAction([
+			method : "GET",
+			path   : "/api/${state.username}/scenes",
+			headers: [
+					HOST: host
+			]], "${selectedHue}", [callback: "scenesHandler"]))
 }
 
 private verifyHueBridge(String deviceNetworkId, String host) {
@@ -385,12 +463,36 @@ Map groupsDiscovered() {
 	return groupmap
 }
 
+Map scenesDiscovered() {
+	def scenes = getHueScenes()
+	def scenemap = [:]
+	if (scenes instanceof java.util.Map) {
+		scenes.each {
+			def value = "${it.value.name}"
+			def key = app.id + "/scenes/" + it.value.id // JEM
+			scenemap["${key}"] = value
+		}
+	} else { //backwards compatable
+		scenes.each {
+			def value = "${it.name}"
+			def key = app.id + "/scenes/" + it.id // JEM
+			logg += "$value - $key, "
+			scenemap["${key}"] = value
+		}
+	}
+	return scenemap
+}
+
 Map getHueBulbs() {
 	state.bulbs = state.bulbs ?: [:]
 }
 
 Map getHueGroups() {
 	state.groups = state.groups ?: [:]
+}
+
+Map getHueScenes() {
+	state.scenes = state.scenes ?: [:]
 }
 
 def getHueBridges() {
@@ -417,6 +519,7 @@ def initialize() {
 	log.debug "Initializing"
 	unsubscribe(bridge)
 	state.inBulbDiscovery = false
+	state.inGroupDiscovery = false
 	state.bridgeRefreshCount = 0
 	state.bulbRefreshCount = 0
 	state.groupRefreshCount = 0
@@ -426,8 +529,9 @@ def initialize() {
 		addBridge()
 		addBulbs()
 		addGroups()
+		addScenes()
 		doDeviceSync()
-		runEvery5Minutes("doDeviceSync")
+		runEvery1Minute("doDeviceSync")
 	}
 }
 
@@ -492,6 +596,10 @@ private addChildGroup(dni, name, hub, update = false, device = null) {
     return addChildDevice("mcmanigle", "Hue Group", dni, hub, ["label": name])
 }
 
+private addChildScene(dni, name, hub, update = false, device = null) {
+    return addChildDevice("mcmanigle", "Hue Scene", dni, hub, ["label": name])
+}
+
 def addBulbs() {
 	def bulbs = getHueBulbs()
 	selectedBulbs?.each { dni ->
@@ -507,7 +615,7 @@ def addBulbs() {
 						d.completedSetup = true
 					}
 				} else {
-					log.debug "$dni in not longer paired to the Hue Bridge or ID changed"
+					log.debug "$dni is no longer paired to the Hue Bridge or ID changed"
 				}
 			} else {
 				//backwards compatable
@@ -536,18 +644,46 @@ def addGroups() {
 			if (groups instanceof java.util.Map) {
 				newHueGroup = groups.find { (app.id + "/groups/" + it.value.id) == dni }
 				if (newHueGroup != null) {
-					d = addChildGroup(dni, newHueBulb?.value?.name, newHueBulb?.value?.hub)
+					d = addChildGroup(dni, newHueGroup?.value?.name, newHueGroup?.value?.hub)
 					if (d) {
 						log.debug "created group ${d.displayName} with id $dni"
 						d.completedSetup = true
 					}
 				} else {
-					log.debug "$dni in not longer paired to the Hue Bridge or ID changed"
+					log.debug "$dni is no longer paired to the Hue Bridge or ID changed"
 				}
 			} else {
 				//backwards compatable
 				newHueGroup = groups.find { (app.id + "/groups/" + it.id) == dni }
-				d = addChildGroup(dni, newHueBulb?.value?.name, newHueBulb?.value?.hub)
+				d = addChildGroup(dni, newHueGroup?.value?.name, newHueGroup?.value?.hub)
+				d?.completedSetup = true
+				d?.refresh()
+			}
+		}
+	}
+}
+
+def addScenes() {
+	def scenes = getHueScenes()
+	selectedScenes?.each { dni ->
+		def d = getChildDevice(dni)
+		if (!d) {
+			def newHueScene
+			if (scenes instanceof java.util.Map) {
+				newHueScene = scenes.find { (app.id + "/scenes/" + it.value.id) == dni }
+				if (newHueScene != null) {
+					d = addChildScene(dni, newHueScene?.value?.name, newHueScene?.value?.hub)
+					if (d) {
+						log.debug "created scene ${d.displayName} with id $dni"
+						d.completedSetup = true
+					}
+				} else {
+					log.debug "$dni is no longer paired to the Hue Bridge or ID changed"
+				}
+			} else {
+				//backwards compatable
+				newHueScene = groups.find { (app.id + "/scenes/" + it.id) == dni }
+				d = addChildScene(dni, newHueScene?.value?.name, newHueScene?.value?.hub)
 				d?.completedSetup = true
 				d?.refresh()
 			}
@@ -581,7 +717,7 @@ def addBridge() {
 			if (newbridge) {
 				// Hue uses last 6 digits of MAC address as ID number, this number is shown on the bottom of the bridge
 				def idNumber = getBridgeIdNumber(selectedHue)
-				d = addChildDevice("smartthings", "Hue Bridge", selectedHue, vbridge.value.hub, ["label": "Hue Bridge ($idNumber)"])
+				d = addChildDevice("mcmanigle", "Hue Bridge", selectedHue, vbridge.value.hub, ["label": "Hue Bridge ($idNumber)"])
 				if (d) {
 					// Associate smartapp to bridge so user will be warned if trying to delete bridge
 					app.updateSetting("bridgeDevice", [type: "device.hueBridge", value: d.id])
@@ -733,6 +869,16 @@ void groupsHandler(physicalgraph.device.HubResponse hubResponse) {
 	}
 }
 
+void scenesHandler(physicalgraph.device.HubResponse hubResponse) {
+	if (isValidSource(hubResponse.mac)) {
+		def body = hubResponse.json
+		if (!body?.state?.on) { //check if first time poll made it here by mistake
+			log.debug "Adding scenes to state!"
+			updateSceneState(body, hubResponse.hubId)
+		}
+	}
+}
+
 void usernameHandler(physicalgraph.device.HubResponse hubResponse) {
 	if (isValidSource(hubResponse.mac)) {
 		def body = hubResponse.json
@@ -840,6 +986,10 @@ def isInGroupDiscovery() {
 	return state.inGroupDiscovery
 }
 
+def isInSceneDiscovery() {
+	return state.inSceneDiscovery
+}
+
 private updateBulbState(messageBody, hub) {
 	def bulbs = getHueBulbs()
 
@@ -878,7 +1028,7 @@ private updateGroupState(messageBody, hub) {
 			if (groups[k] == null) {
 				groups[k] = [:]
 			}
-			groups[k] << [id: k, name: v.name, hub: hub, remove: false]
+			groups[k] << [id: k, name: v.name, lights: v.lights, hub: hub, remove: false]
 			toRemove.remove(k)
 		}
 	}
@@ -887,6 +1037,40 @@ private updateGroupState(messageBody, hub) {
 	toRemove.each { k, v ->
 		log.warn "${groups[k].name} no longer exists on bridge, removing"
 		groups.remove(k)
+	}
+}
+
+private updateSceneState(messageBody, hub) {
+	def scenes = getHueScenes()
+	def groups = getHueGroups()
+
+	// Copy of scenes used to locate old groups in state that are no longer on bridge
+	def toRemove = [:]
+	toRemove << scenes
+
+	messageBody.each { k, v ->
+
+		if (v instanceof Map) {
+			if (scenes[k] == null) {
+				scenes[k] = [:]
+			}
+						
+			def name = v.name
+			groups.each{ gk, gv ->
+			    if (gv.lights.containsAll(v.lights)) {
+			        name = v.name + " in ${gv.name}"
+			    }
+			}
+			
+			scenes[k] << [id: k, name: name, lights: v.lights, hub: hub, remove: false]
+			toRemove.remove(k)
+		}
+	}
+
+	// Remove bulbs from state that are no longer discovered
+	toRemove.each { k, v ->
+		log.warn "${scenes[k].name} no longer exists on bridge, removing"
+		scenes.remove(k)
 	}
 }
 
@@ -910,7 +1094,7 @@ def parse(childDevice, description) {
 				log.warn "Parsing Body failed"
 			}
 			if (body instanceof java.util.Map) {
-				// get (poll) reponse
+				// get (poll) response
 				return handlePoll(body)
 			} else {
 				//put response
@@ -930,6 +1114,14 @@ private sendColorEvents(device, xy, hue, sat, ct, colormode = null) {
 		return
 
 	def events = [:]
+	
+	if (colormode == "ct" || (xy == null && hue == null && sat == null && ct != null) ) {
+	    device.sendEvent([name: "colorMode", value: "colorTemperature", descriptionText: "Color mode is color temperature"])
+	}
+	else if (colormode != null || xy != null || hue != null || sat != null) {
+	    device.sendEvent([name: "colorMode", value: "color", descriptionText: "Color mode is true color (hs or xy)"])
+	}
+	
 	// For now, only care about changing color temperature if requested by user
 	if (ct != null && ct != 0 && (colormode == "ct" || (xy == null && hue == null && sat == null))) {
 		// for some reason setting Hue to their specified minimum off 153 yields 154, dealt with below
@@ -1028,7 +1220,7 @@ private handleCommandResponse(body) {
 			payload.success.each { k, v ->
 				def data = k.split("/")
 				if (data.length == 5) {
-					childDeviceNetworkId = app.id + "/" + data[2]
+					childDeviceNetworkId = app.id + "/" + data[1] + "/" + data[2]
 					if (!updates[childDeviceNetworkId])
 						updates[childDeviceNetworkId] = [:]
 					eventType = data[4]
@@ -1053,7 +1245,7 @@ private handleCommandResponse(body) {
 		def id = getId(device)
 		sendBasicEvents(device, "on", params.on)
 		sendBasicEvents(device, "bri", params.bri)
-		sendColorEvents(device, params.xy, params.hue, params.sat, params.ct)
+		sendColorEvents(device, params.xy, params.hue, params.sat, params.ct, params.colormode)
 	}
 	return []
 }
@@ -1084,10 +1276,11 @@ private handlePoll(body) {
 	time11.add(Calendar.MINUTE, -11)
 	Calendar currentTime = Calendar.getInstance()
 
-	def bulbs = getChildDevices()
-	for (bulb in body) {
-		def device = bulbs.find { it.deviceNetworkId == "${app.id}/${bulb.key}" }
+	def children = getChildDevices()
+	for (bulb in body.lights) {
+		def device = children.find { it.deviceNetworkId == "${app.id}/lights/${bulb.key}" }
 		if (device) {
+		    log.trace "Parsing poll data for ${app.id}/lights/${bulb.key}"
 			if (bulb.value.state?.reachable) {
 				if (state.bulbs[bulb.key]?.online == false || state.bulbs[bulb.key]?.online == null) {
 					// light just came back online, notify device watch
@@ -1120,6 +1313,20 @@ private handlePoll(body) {
 			}
 		}
 	}
+
+	for (group in body.groups) {
+		def device = children.find { it.deviceNetworkId == "${app.id}/groups/${group.key}" }
+		if (device) {
+            log.trace "Parsing poll data for ${app.id}/groups/${group.key}"
+
+			if (!state.updating) {
+				sendBasicEvents(device, "on", group.value?.state?.any_on)
+				sendBasicEvents(device, "bri", group.value?.action?.bri)
+				sendColorEvents(device, group.value?.action?.xy, group.value?.action?.hue, group.value?.action?.sat, group.value?.action?.ct, group.value?.action?.colormode)
+			}
+		}
+	}
+
 	return []
 }
 
@@ -1164,6 +1371,15 @@ def groupOn(childDevice) {
 	createSwitchEvent(childDevice, "on")
 	put("groups/$id/action", [on: true])
 	return "Group is turning On"
+}
+
+def sceneOn(childDevice) {
+	log.debug "Executing 'sceneOn'"
+	def id = getId(childDevice)
+	updateInProgress()
+	createSwitchEvent(childDevice, "on")
+	put("groups/0/action", [scene: id])
+	return "Scene is turning On"
 }
 
 def off(childDevice) {

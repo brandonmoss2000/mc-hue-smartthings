@@ -1,7 +1,7 @@
 /**
  *  Hue Bulb
  *
- *  Philips Hue Type "Extended Color Group"
+ *  Philips Hue Type "Group"
  *
  *  Adapted by John McManigle 2018
  */
@@ -14,6 +14,7 @@ metadata {
 		capability "Actuator"
 		capability "Color Control"
 		capability "Color Temperature"
+		capability "Color Mode"
 		capability "Switch"
 		capability "Refresh"
 		capability "Sensor"
