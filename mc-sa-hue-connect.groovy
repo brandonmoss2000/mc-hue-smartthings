@@ -19,7 +19,7 @@
 include 'localization'
 
 definition(
-		name: "Hue (Connect)",
+		name: "Hue (McConnect)",
 		namespace: "mcmanigle",
 		author: "John McManigle",
 		description: "Allows you to connect your Philips Hue lights, groups, and scenes with SmartThings and control them from your Things area or Dashboard in the SmartThings Mobile app. Please update your Hue Bridge first, outside of the SmartThings app, using the Philips Hue app.",
